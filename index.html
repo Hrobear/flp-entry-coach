@@ -25,12 +25,12 @@ async function askAI(){
  if(!accessToken){accessToken=prompt('アクセスコードを入力してください（Google APIキーではありません）');if(!accessToken)return;sessionStorage.setItem('flp_access_token',accessToken)}
  const button=$('ai');button.disabled=true;button.textContent='Geminiに問い合わせ中…';$('status').textContent='AIへ回答を送信しています';
  try{
-  const r=await fetch(API_ENDPOINT,{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+accessToken},body:JSON.stringify({prompt:getPrompt()})});
+  const r=await fetch(API_ENDPOINT,{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+accessToken},body:JSON.stringify({prompt:getPrompt()}),signal:AbortSignal.timeout(30000)});
   const data=await r.json().catch(()=>({}));
   if(r.status===401){sessionStorage.removeItem('flp_access_token');throw Error('アクセスコードが正しくありません')}
   if(!r.ok)throw Error(data.error||'AIの応答取得に失敗しました');
   $('aitext').textContent=data.text||'回答がありません';$('airesult').hidden=false;$('status').textContent='AIからの助言を取得しました。';
- }catch(e){$('status').textContent='エラー: '+e.message}finally{button.disabled=false;button.textContent='Geminiに相談する'}
+ }catch(e){$('status').textContent='エラー: '+(e.name==='TimeoutError'||e.name==='AbortError'?'30秒以内に応答がありませんでした。Cloudflare Workerのコードとログを確認してください。':e.message)}finally{button.disabled=false;button.textContent='Geminiに相談する'}
 }
 async function copyPrompt(){const t=getPrompt();try{await navigator.clipboard.writeText(t);$('status').textContent='相談用の文章をコピーしました。ChatGPTへ貼り付けてください。'}catch(e){const el=document.createElement('textarea');el.value=t;document.body.appendChild(el);el.select();document.execCommand('copy');el.remove();$('status').textContent='相談用の文章をコピーしました。'}}
 function exportTxt(){let t='2027年度 FLP 地域・公共マネジメント エントリーシート 作成メモ\n'+new Date().toLocaleString('ja-JP')+'\n\n';sections.forEach((s,i)=>{t+='■ '+s.title+'\n';s.qs.forEach(q=>t+=q[1]+'\n'+(val(q[0])||'（未回答）')+'\n\n');if(s.limit)t+='【提出用本文】（'+count(val('draft'+i))+'/'+s.limit+'字）\n'+(val('draft'+i)||'（未作成）')+'\n\n';});const blob=new Blob(['\ufeff'+t],{type:'text/plain;charset=utf-8'}),url=URL.createObjectURL(blob),link=document.createElement('a');link.href=url;link.download='FLPエントリーシート_作成メモ.txt';link.click();URL.revokeObjectURL(url);$('status').textContent='作成メモを保存しました。'}render();
