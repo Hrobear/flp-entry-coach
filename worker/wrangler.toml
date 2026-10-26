@@ -1,0 +1,7 @@
+name = "flp-entry-coach-api"
+main = "index.js"
+compatibility_date = "2026-10-26"
+
+[vars]
+ALLOWED_ORIGIN = "https://hrobear.github.io"
+GEMINI_MODEL = "gemini-2.5-flash"
