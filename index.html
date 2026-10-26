@@ -18,7 +18,7 @@ $('main').querySelectorAll('[data-field]').forEach(el=>el.addEventListener('inpu
 function updateFeedback(){const a=sections[active];$('feedbacklist').innerHTML=feedback(active).map(x=>'<li>'+esc(x)+'</li>').join('');if(a.limit){const n=count(val('draft'+active));$('count').textContent=n+' / '+a.limit+' 字';$('count').className='count'+(n>a.limit?' over':'')}const completed=sections.reduce((n,x,i)=>n+score(i),0),total=sections.reduce((n,x)=>n+x.qs.length+(x.limit?1:0),0);document.querySelector('.progress span').style.width=Math.round(completed/total*100)+'%';}
 function go(n){if(n<0||n>=sections.length)return;active=n;render();window.scrollTo({top:0,behavior:'smooth'})}
 function getPrompt(){const a=sections[active];return `あなたは大学FLP地域・公共マネジメントプログラムのエントリーシートを支援する編集コーチです。以下は学生本人の回答です。内容を捏造せず、本人らしい自然な日本語を守りながら、(1)良い点 (2)深掘りすべき質問（最大3つ） (3)構成案 (4)提出用の文章案 を示してください。${a.limit?'文章案は'+a.limit+'字以内で。':'準備情報の整理と活用案を示してください。'}事実未確認の情報は補わないでください。\n\n【対象】${a.title}\n${a.qs.map(q=>q[1]+'\n'+(val(q[0])||'（未回答）')).join('\n\n')}\n\n【現在の本文】\n${val('draft'+active)||'（未作成）'}\n\n【学業の情報】\nGPA・成績：${val('gpa')||'未回答'}\n印象的な授業：${val('classes')||'未回答'}\n学び方の工夫：${val('study')||'未回答'}\n希望ゼミ：${val('seminar')||'未回答'}\nゼミの魅力：${val('seminarfit')||'未回答'}`}
-const API_ENDPOINT=''; // 公開前に Cloudflare Workers のURLを指定: https://xxxx.workers.dev
+const API_ENDPOINT='https://flp-entry-coach-api.hrobear1222.workers.dev/';
 async function askAI(){
  if(!API_ENDPOINT){$('status').textContent='AI接続先が未設定です。公開者に設定を依頼してください。';return;}
  let accessToken=sessionStorage.getItem('flp_access_token');
