@@ -25,8 +25,12 @@ async function askAI(){
  if(!accessToken){accessToken=prompt('アクセスコードを入力してください（Google APIキーではありません）');if(!accessToken)return;sessionStorage.setItem('flp_access_token',accessToken)}
  const button=$('ai');button.disabled=true;button.textContent='Geminiに問い合わせ中…';$('status').textContent='AIへ回答を送信しています';
  try{
-  const r=await fetch(API_ENDPOINT,{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+accessToken},body:JSON.stringify({prompt:getPrompt()}),signal:AbortSignal.timeout(30000)});
-  const data=await r.json().catch(()=>({}));
+  const controller=new AbortController();
+  const timer=setTimeout(()=>controller.abort(),30000);
+  let r;
+  try { r=await fetch(API_ENDPOINT,{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+accessToken},body:JSON.stringify({prompt:getPrompt()}),signal:controller.signal}); }
+  finally {clearTimeout(timer)}
+  const data=await Promise.race([r.json().catch(()=>({})),new Promise((_,reject)=>setTimeout(()=>reject(new Error('AI応答の読み込みがタイムアウトしました')),10000))]);
   if(r.status===401){sessionStorage.removeItem('flp_access_token');throw Error('アクセスコードが正しくありません')}
   if(!r.ok)throw Error(data.error||'AIの応答取得に失敗しました');
   $('aitext').textContent=data.text||'回答がありません';$('airesult').hidden=false;$('status').textContent='AIからの助言を取得しました。';
